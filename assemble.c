@@ -524,7 +524,7 @@ int parseInstruction(int op, int ad, int arg, byte pass){
                     instruct[1] = splits[0];
                     break;
                 case 8:
-                    instruct[0] = splits[1];
+                    instruct[1] = splits[1];
                     break;
                 default: return -1;
             }
