@@ -716,7 +716,7 @@ int parseLine(char* line, byte pass, byte* m){
                 else args = labelVals[index];
             }
             while (line[off] != '\n' || line[off] != 0){
-                if (line[off] = ')') foundP++;
+                if (line[off] == ')') foundP++;
                 else if (sequenceEqu(line + off, ",x", 2)) foundXY = 1;
                 else if (sequenceEqu(line + off, ",y", 2)) foundXY = 2;
                 off++;
