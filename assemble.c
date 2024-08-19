@@ -870,8 +870,12 @@ int assemble(char* code, byte* res){
 
 }
 
-int main(){
-    FILE* file = fopen("src.s", "rb");
+int main(int argc, char** argv){
+    if (argc == 1){
+        printf("No Files!\n");
+        return 0;
+    }
+    FILE* file = fopen(argv[1], "rb");
     fseek(file, 0L, SEEK_END);
     int sz = ftell(file);
     char* str = (char*)malloc(sz + 1);
