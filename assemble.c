@@ -140,7 +140,7 @@ int findLabels(char* buff){
 
 int identifyLabel(char* l){
     int len = 1;
-    while (l[len - 1] != ' ' && l[len - 1] != '\t' && l[len - 1] != '\n' && l[len - 1] != '\r' && l[len - 1] != 0) len++;
+    while (l[len - 1] != ' ' && l[len - 1] != '\t' && l[len - 1] != '\n' && l[len - 1] != '\r' && l[len - 1] != 0 && l[len - 1] != ')') len++;
     char* lbl = (char*)malloc(len);
     for (int i = 0; i < len; i++){
         lbl[i] = l[i];
@@ -702,7 +702,7 @@ int parseLine(char* line, byte pass, byte* m){
             byte foundP = 0;
             byte foundXY = 0;
             off++;
-            while (line[off] != ' ' && line[off] != '\t') off++;
+            while (line[off] == ' ' || line[off] == '\t') off++;
             if (line[off] >= '0' && line[off] <= '9'){
                 args = parseNum('d', line + off);
             } else if (line[off] == '$'){
@@ -715,7 +715,7 @@ int parseLine(char* line, byte pass, byte* m){
                 if (pass == 0) args = 0;
                 else args = labelVals[index];
             }
-            while (line[off] != '\n' || line[off] != 0){
+            while (line[off] != '\n' && line[off] != 0){
                 if (line[off] == ')') foundP++;
                 else if (sequenceEqu(line + off, ",x", 2)) foundXY = 1;
                 else if (sequenceEqu(line + off, ",y", 2)) foundXY = 2;
@@ -836,6 +836,7 @@ int assemble(char* code, byte* res){
     setUpLabels(code);
     while (1){
         status = parseLine(code + off, pass, res);
+        //printf("LINE %d, %d\n", lines, status);
         if (status == -1){
             for (int i = 0; i < labelLen; i++){
                 free(labels[i]);
@@ -870,12 +871,8 @@ int assemble(char* code, byte* res){
 
 }
 
-int main(int argc, char** argv){
-    if (argc == 1){
-        printf("No Files!\n");
-        return 0;
-    }
-    FILE* file = fopen(argv[1], "rb");
+int main(){
+    FILE* file = fopen("test.s", "rb");
     fseek(file, 0L, SEEK_END);
     int sz = ftell(file);
     char* str = (char*)malloc(sz + 1);
@@ -889,7 +886,7 @@ int main(int argc, char** argv){
     }
     int err = assemble(str, memory);
     if (err <= -1) printf("ERROR LINE %d\n", err * -1);
-    for (int i = 48; i < 64; i++){
+    for (int i = 0; i < 160; i++){
         printf("%.04X: ", 16 * i);
         for (int j = 0; j < 16; j++){
             printf("%.02X ", memory[16 * i + j]);
