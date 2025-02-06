@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <conio.h>
 
 typedef unsigned char byte;
 typedef unsigned short int dbyte;
@@ -56,6 +57,7 @@ int findOpcode(char* a){
             code[i] = 'a' + code[i] - 'A';
         }
     }
+    if (!(a[3] == ' ' || a[3] == '\t' || a[3] == '\n' || a[3] == 0 || a[3] == '\r')) return -1;
     for (int i = 0; i < 57; i++){
         if (strequals(code, opcodes[i])) return i;
     }
@@ -244,7 +246,7 @@ int parseInstruction(int op, int ad, int arg, byte pass){
             break;
         case 19:
             splitType = 6;
-            splitData = 0xC0C4CC;
+            splitData = 0xCCC4C0;
             break;
         case 20:
             splitType = 7;
@@ -871,28 +873,56 @@ int assemble(char* code, byte* res){
 
 }
 
-int main(){
-    FILE* file = fopen("test.s", "rb");
+int main(int argc, char** argv){
+    if (argc == 1){
+        printf("No Files!\n");
+        return 0;
+    }
+    FILE* file = fopen(argv[1], "rb");
     fseek(file, 0L, SEEK_END);
     int sz = ftell(file);
     char* str = (char*)malloc(sz + 1);
     rewind(file);
     fread(str, 1, sz, file);
     str[sz] = 0;
-    printf("%s\n", str);
     byte* memory = (byte*)malloc(65536);
     for (int i = 0; i < 65536; i++){
         memory[i] = 0;
     }
     int err = assemble(str, memory);
     if (err <= -1) printf("ERROR LINE %d\n", err * -1);
-    for (int i = 0; i < 160; i++){
-        printf("%.04X: ", 16 * i);
-        for (int j = 0; j < 16; j++){
-            printf("%.02X ", memory[16 * i + j]);
-        }
-        printf("\n");
+    dbyte low, high;
+    low = 0;
+    while (memory[low] == 0 && low != 0xFFFF) low++;
+    high = 0xFFFF;
+    while (memory[high] == 0 && high != 0) high--;
+    if (low > high){
+        printf("Nothing Compiled!\n");
+        return 0;
     }
+    byte customFile = 0;
+    byte writeLow = 0;
+    if (argc > 2){
+        int argin = 2;
+        while (argin < argc){
+            if (strequals(argv[argin], "-l")){
+                writeLow = 1;
+            } else if (strequals(argv[argin], "-o")){
+                if (argc - argin > 2){
+                    argin++;
+                    customFile = 1;
+                    file = fopen(argv[argin], "wb");
+                }
+            }
+            argin++;
+        }
+    }
+    if (!customFile) file = fopen("a.bin", "wb");
+    if (writeLow) fwrite(&low, 1, 2, file);
+    fwrite(memory + low, 1, high - low + 1, file);
+    printf("Compiled!\n%d bytes from %.04X to %.04X\n", high - low + 1, low, high);
+    file = NULL;
     free(memory);
+    getch();
     return 0;
 }
