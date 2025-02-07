@@ -897,6 +897,8 @@ int main(int argc, char** argv){
     high = 0xFFFF;
     while (memory[high] == 0 && high != 0) high--;
     if (low > high){
+        free(str);
+        free(memory);
         printf("Nothing Compiled!\n");
         return 0;
     }
