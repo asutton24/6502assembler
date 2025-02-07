@@ -921,7 +921,9 @@ int main(int argc, char** argv){
     if (writeLow) fwrite(&low, 1, 2, file);
     fwrite(memory + low, 1, high - low + 1, file);
     printf("Compiled!\n%d bytes from %.04X to %.04X\n", high - low + 1, low, high);
+    fclose(file);
     file = NULL;
+    free(str);
     free(memory);
     getch();
     return 0;
