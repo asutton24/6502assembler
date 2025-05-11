@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <conio.h>
 
+#define MAX_FILE_SIZE 1048576
+
 typedef unsigned char byte;
 typedef unsigned short int dbyte;
 
@@ -548,12 +550,14 @@ int parseInstruction(int op, int ad, int arg, byte pass){
                 case 3:
                     instruct[0]++;
                     instruct[1] = splits[3];
+                    break;
                 case 6:
                     instruct[1] = splits[2];
                     break;
                 case 7:
                     instruct[0]++;
                     instruct[1] = splits[4];
+                    break;
                 default: return -1;
             }
             break;
@@ -569,12 +573,14 @@ int parseInstruction(int op, int ad, int arg, byte pass){
                 case 3:
                     instruct[0]++;
                     instruct[1] = splits[3];
+                    break;
                 case 4:
                     instruct[1] = splits[2];
                     break;
                 case 5:
                     instruct[0]++;
                     instruct[1] = splits[4];
+                    break;
                 default: return -1;
             }
             break;
@@ -786,8 +792,8 @@ int parseLine(char* line, byte pass, byte* m){
             }
         }
         int stat = parseInstruction(op, admode, args, pass);
+        //printf("%d %d %d\n", op, admode, args);
         if (stat == -1){
-            printf("%d %d %d\n", op, admode, args);
             return -1;
         }
     }
@@ -878,13 +884,86 @@ int main(int argc, char** argv){
         printf("No Files!\n");
         return 0;
     }
-    FILE* file = fopen(argv[1], "rb");
-    fseek(file, 0L, SEEK_END);
-    int sz = ftell(file);
-    char* str = (char*)malloc(sz + 1);
-    rewind(file);
-    fread(str, 1, sz, file);
-    str[sz] = 0;
+    FILE* file;
+    int sz;
+    char* str;
+    int superAssemble = 0;
+    byte writeLow = 0;
+    if (strequals(argv[1], "-s") || strequals(argv[1], "-x")){
+        if (strequals(argv[1], "-x")) writeLow = 1;
+        int superAssemble = 1;
+        int spaceIndex;
+        int writeIndex = 0;
+        char* listBuffer;
+        str = (char*)malloc(MAX_FILE_SIZE);
+        file = fopen("include.txt", "rb");
+        if (file == NULL){
+            printf("No include file!\n");
+            free(str);
+            return -1;
+        }
+        fseek(file, 0L, SEEK_END);
+        sz = ftell(file);
+        listBuffer = (char*)malloc(sz + 1);
+        rewind(file);
+        fread(listBuffer, 1, sz, file);
+        fclose(file);
+        listBuffer[sz] = 0;
+        while ((spaceIndex = arblen(' ', listBuffer)) != -1){
+            listBuffer[spaceIndex] = 0;
+            file = fopen(listBuffer, "rb");
+            if (file == NULL){
+                printf("File error!\n");
+                free(str);
+                free(listBuffer);
+                return -1;
+            }
+            fseek(file, 0L, SEEK_END);
+            sz = ftell(file);
+            rewind(file);
+            if (writeIndex + sz > MAX_FILE_SIZE){
+                printf("Too many files!\n");
+                free(str);
+                fclose(file);
+                free(listBuffer);
+                return -1;
+            }
+            fread(str + writeIndex, 1, sz, file);
+            writeIndex += sz;
+            str[writeIndex] = '\n';
+            writeIndex++;
+            listBuffer += spaceIndex + 1;
+            fclose(file); 
+        }
+        file = fopen(listBuffer, "rb");
+        if (file == NULL){
+            printf("File error!\n");
+            free(str);
+            fclose(file);
+            free(listBuffer);
+            return -1;
+        }
+        fseek(file, 0L, SEEK_END);
+        sz = ftell(file);
+        rewind(file);
+        fread(str + writeIndex, 1, sz, file);
+        writeIndex += sz;
+        listBuffer += spaceIndex + 1;
+        fclose(file);
+    } else {
+        file = fopen(argv[1], "rb");
+        if (file == NULL){
+            printf("File error\n");
+            fclose(file);
+            return -1;
+        }
+        fseek(file, 0L, SEEK_END);
+        sz = ftell(file);
+        str = (char*)malloc(sz + 1);
+        rewind(file);
+        fread(str, 1, sz, file);
+        str[sz] = 0;
+    }
     byte* memory = (byte*)malloc(65536);
     for (int i = 0; i < 65536; i++){
         memory[i] = 0;
@@ -903,8 +982,7 @@ int main(int argc, char** argv){
         return 0;
     }
     byte customFile = 0;
-    byte writeLow = 0;
-    if (argc > 2){
+    if (!superAssemble && argc > 2){
         int argin = 2;
         while (argin < argc){
             if (strequals(argv[argin], "-l")){
