@@ -23,6 +23,23 @@ int labelLen;
 dbyte pc = 0;
 byte instruct[4] = {0, 0, 0, 0};
 
+int print_line(char* str, int line){
+    if (line < 1) return -1;
+    int current = 1;
+    int c = 0;
+    while (current < line){
+        if (str[c] == 0) return -1;
+        if (str[c] == 10 || str[c] == 13){
+            current++;
+            if ((str[c + 1] == 10 || str[c + 1] == 13) && str[c] != str[c+1]) c++;
+        }
+        c++;
+    }
+    for (int i = c; str[i] != 13 && str[i] != 10 && str[i] != 0; i++) {printf("%c", str[i]);}
+    printf("\n");
+    return 0;
+}
+
 int strequals(char* a, char* b){
     int off = 0;
     while (a[off] != 0 && b[off] != 0 && a[off] == b[off]){
@@ -906,6 +923,7 @@ int main(int argc, char** argv){
         listBuffer = (char*)malloc(sz + 1);
         rewind(file);
         fread(listBuffer, 1, sz, file);
+        for (int i = 0; i < sz +1; i++){ if (listBuffer[i] == 10) listBuffer[i] = 0;}
         fclose(file);
         listBuffer[sz] = 0;
         while ((spaceIndex = arblen(' ', listBuffer)) != -1){
@@ -936,7 +954,7 @@ int main(int argc, char** argv){
         }
         file = fopen(listBuffer, "rb");
         if (file == NULL){
-            printf("File error!\n");
+            printf("Include File error!\n");
             free(str);
             fclose(file);
             free(listBuffer);
@@ -968,7 +986,14 @@ int main(int argc, char** argv){
         memory[i] = 0;
     }
     int err = assemble(str, memory);
-    if (err <= -1) printf("ERROR LINE %d\n", err * -1);
+    if (err <= -1){
+        printf("ERROR LINE %d\n", err * -1);
+        for (int i = err * -1 - 2; i < err * -1 + 3; i++){
+            printf("%d\t", i);
+            if (i == err * -1) printf(">>>");
+            print_line(str, i);
+        }
+    }
     dbyte low, high;
     low = 0;
     while (memory[low] == 0 && low != 0xFFFF) low++;
