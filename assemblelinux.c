@@ -31,11 +31,11 @@ int print_line(char* str, int line){
         if (str[c] == 0) return -1;
         if (str[c] == 10 || str[c] == 13){
             current++;
-            if ((str[c + 1] == 10 || str[c + 1] == 13) && str[c] != str[c+1]) c++;
+            if ((str[c + 1] == '\n' || str[c + 1] == '\r') && str[c] != str[c+1]) c++;
         }
         c++;
     }
-    for (int i = c; str[i] != 13 && str[i] != 10 && str[i] != 0; i++) {printf("%c", str[i]);}
+    for (int i = c; str[i] != '\r' && str[i] != '\n' && str[i] != 0; i++) {printf("%c", str[i]);}
     printf("\n");
     return 0;
 }
